@@ -1,2 +1,2 @@
-# presense-stacked-card
+# StackedCardCarousel
 Created with CodeSandbox

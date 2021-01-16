@@ -1,0 +1,8 @@
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+  padding: 0;
+  background-image: linear-gradient(180deg, #9c1aff 0%, rgb(119, 0, 255) 100%);
+}
