@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import styled from "styled-components";
 import { layout, color } from "styled-system";
 import { AnimateSharedLayout, motion, AnimatePresence } from "framer-motion";
@@ -20,22 +20,28 @@ const srcs = [src1, src2, src3, src4, src5];
 const flyMove = 500;
 
 const variants = {
-  enter: (direction) => {
+  enter: ({ direction, i }) => {
     return {
-      x: direction > 0 ? 1000 : -1000,
-      opacity: 0
+      x: direction > 0 ? flyMove : -flyMove,
+      scale: direction > 0 ? 1 - 0.1 * 3 : 1,
+      transition: {
+        delayChildren: 1
+      }
     };
   },
-  center: {
-    zIndex: 1,
-    x: 0,
-    opacity: 1
-  },
-  exit: (direction) => {
+  center: ({ direction, i }) => ({
+    zIndex: srcs.length - i,
+    x: i * 40,
+    scale: 1 - 0.1 * i,
+    opacity: 1 - 0.1 * i
+  }),
+  exit: ({ direction, i }) => {
     return {
-      zIndex: 0,
-      x: direction < 0 ? 1000 : -1000,
-      opacity: 0
+      zIndex: srcs.length - i,
+      x: direction < 0 ? flyMove : -flyMove,
+      transition: {
+        delayChildren: 1
+      }
     };
   }
 };
@@ -48,91 +54,51 @@ const swipePower = (offset, velocity) => {
 export default function StackedCarousel() {
   const [[page, direction], setPage] = useState([0, 0]);
 
+  // detect it as an entirely new image. So you can infinitely paginate as few as 1 images.
+  const imageIndex = (page) => wrap(0, srcs.length, page);
+
   const paginate = (newDirection) => {
-    const nextPage = wrap(0, srcs.length, page + newDirection);
-    setPage([nextPage, newDirection]);
+    setPage([page + newDirection, newDirection]);
   };
 
   console.log(page, direction);
   return (
     <Cotainer height="600px" bg="#374045">
       <AnimatePresence initial={false} custom={direction}>
-        <Pannel
-          key={page}
-          drag="x"
-          dragConstraints={{ right: 0, top: 0, left: 0, bottom: 0 }}
-          dragElastic={0.5}
-          custom={direction}
-          variants={variants}
-          initial="enter"
-          animate="center"
-          exit="exit"
-          transition={{
-            x: { type: "spring", stiffness: 300, damping: 30 },
-            opacity: { duration: 0.2 }
-          }}
-          onDragEnd={(e, { offset, velocity }) => {
-            const swipe = swipePower(offset.x, velocity.x);
-            if (swipe < -swipeConfidenceThreshold) {
-              paginate(1);
-            } else if (swipe > swipeConfidenceThreshold) {
-              paginate(-1);
-            }
-          }}
-        >
-          <Card>
-            <CardImg src={srcs[page]} draggable={false} alt="card" />
-          </Card>
-        </Pannel>
+        {range(3).map((index) => (
+          <Pannel
+            key={page + index}
+            drag="x"
+            dragConstraints={{ right: 0, top: 0, left: 0, bottom: 0 }}
+            dragElastic={0.5}
+            custom={{ direction, i: index }}
+            variants={variants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{
+              x: { type: "tween" },
+              opacity: { duration: 0.2 }
+            }}
+            onDragEnd={(e, { offset, velocity }) => {
+              const swipe = swipePower(offset.x, velocity.x);
+              if (swipe < -swipeConfidenceThreshold) {
+                paginate(1);
+              } else if (swipe > swipeConfidenceThreshold) {
+                paginate(-1);
+              }
+            }}
+          >
+            <Card>
+              <CardImg
+                src={srcs[imageIndex(page + index)]}
+                draggable={false}
+                alt="card"
+              />
+            </Card>
+          </Pannel>
+        ))}
       </AnimatePresence>
-      {/* <AnimateSharedLayout type="switch">
-        {range(1, 3).map((index) => {
-          // console.log(page, index);
-          return (
-            <Pannel
-              // custom={direction}
-              dragConstraints={{ right: 0, top: 0, left: 0, bottom: 0 }}
-              dragElastic={0.3}
-              // layoutId={1 + index}
-              // transition={{
-              //   x: { type: "tween" }
-              // }}
-              transition={{
-                x: { type: "spring", stiffness: 300, damping: 30 },
-                opacity: { duration: 0.2 }
-              }}
-              initial={{
-                x: -45 * index * direction
-                // opacity: 0
-              }}
-              animate={{
-                scale: 1 - index * 0.1,
-                x: 45 * index,
-                zIndex: srcs.length - index
-              }}
-              exit={{
-                x: 45 * index * direction
-              }}
-              onDragEnd={(e, { offset, velocity }) => {
-                const swipe = swipePower(offset.x, velocity.x);
-                if (swipe < -swipeConfidenceThreshold) {
-                  paginate(1);
-                } else if (swipe > swipeConfidenceThreshold) {
-                  paginate(-1);
-                }
-              }}
-            >
-              <Card>
-                <CardImg
-                  src={srcs[(page + index) % srcs.length]}
-                  draggable={false}
-                  alt="card"
-                />
-              </Card>
-            </Pannel>
-          );
-        })}
-      </AnimateSharedLayout> */}
     </Cotainer>
   );
 }
@@ -157,6 +123,7 @@ const Pannel = styled(motion.div)`
 const Card = styled(motion.div)`
   background: #f8f1f1;
   border-radius: 16px;
+  box-shadow: 0px 0px 15px 0px #fff;
   width: 100%;
   height: 100%;
   overflow: hidden;
