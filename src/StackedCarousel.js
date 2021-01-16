@@ -5,7 +5,7 @@ import { AnimateSharedLayout, motion, AnimatePresence } from "framer-motion";
 import { range } from "lodash-es";
 import { wrap } from "popmotion";
 const src1 =
-  "http://dejou.co.kr/web/product/medium/201811/303f4886684a5cfb99f9efe06ebcd2ad.gif";
+  "https://cf.product.s.naunau.jp/age-group-featured-shops/images/20201221-005823091.jpg?size=450";
 const src2 =
   "http://dailyjou.com/web/product/medium/202009/dad92926ed326872165e983b3e847037.jpg";
 const src3 =
@@ -23,25 +23,25 @@ const variants = {
   enter: ({ direction, i }) => {
     return {
       x: direction > 0 ? flyMove : -flyMove,
-      scale: direction > 0 ? 1 - 0.1 * 3 : 1,
-      transition: {
-        delayChildren: 1
-      }
+      scale: direction > 0 ? 1 - 0.1 * 2 : 1
+      // transition: {
+      //   delayChildren: 1
+      // }
     };
   },
   center: ({ direction, i }) => ({
     zIndex: srcs.length - i,
-    x: i * 40,
-    scale: 1 - 0.1 * i,
-    opacity: 1 - 0.1 * i
+    x: i * 60 - i * Math.pow(2, 2),
+    scale: 1 - 0.1 * i
+    // opacity: 1 - 0.1 * i
   }),
   exit: ({ direction, i }) => {
     return {
       zIndex: srcs.length - i,
-      x: direction < 0 ? flyMove : -flyMove,
-      transition: {
-        delayChildren: 1
-      }
+      x: direction < 0 ? flyMove : -flyMove
+      // transition: {
+      //   delayChildren: 1
+      // }
     };
   }
 };
@@ -63,44 +63,67 @@ export default function StackedCarousel() {
 
   console.log(page, direction);
   return (
-    <Cotainer height="600px" bg="#374045">
-      <Pannel id="camera" />
-      <AnimatePresence initial={false} custom={direction}>
-        {range(3).map((index) => (
-          <Pannel
-            key={page + index}
-            // drag="x"
-            dragConstraints={{ right: 0, top: 0, left: 0, bottom: 0 }}
-            dragElastic={0.5}
-            custom={{ direction, i: index }}
-            variants={variants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            transition={{
-              x: { type: "tween" },
-              opacity: { duration: 0.2 }
+    <>
+      <div style={{ textAlign: "center" }}>
+        <button onClick={() => paginate(-1)}>{"<"}</button>
+        <button onClick={() => paginate(1)}>{">"}</button>
+      </div>
+      <div style={{ display: "flex", justifyContent: "center" }}>
+        {srcs.map((_, idx) => (
+          <div
+            key={idx}
+            style={{
+              width: "30px",
+              height: "30px",
+              margin: "4px",
+              background: imageIndex(page) === idx ? "#fff" : "grey",
+              borderRadius: "100%"
             }}
-            onDragEnd={(e, { offset, velocity }) => {
-              const swipe = swipePower(offset.x, velocity.x);
-              if (swipe < -swipeConfidenceThreshold) {
-                paginate(1);
-              } else if (swipe > swipeConfidenceThreshold) {
-                paginate(-1);
-              }
-            }}
-          >
-            <Card>
-              <CardImg
-                src={srcs[imageIndex(page + index)]}
-                draggable={false}
-                alt="card"
-              />
-            </Card>
-          </Pannel>
+            onClick={() => setPage(idx)}
+          />
         ))}
-      </AnimatePresence>
-    </Cotainer>
+      </div>
+      <Cotainer height="600px" bg="#374045">
+        <AnimatePresence initial={false} custom={direction}>
+          {range(3).map((index) => (
+            <Pannel
+              key={page + index}
+              layout
+              layoutId={index + 1}
+              drag="x"
+              dragConstraints={{ right: 0, top: 0, left: 0, bottom: 0 }}
+              dragElastic={0.5}
+              custom={{ direction, i: index }}
+              variants={variants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{
+                x: { type: "tween" },
+                scale: { type: "tween", duration: 0.35 },
+                zIndex: { delay: direction > 0 ? 0.4 : 0 }
+              }}
+              onDragEnd={(e, { offset, velocity }) => {
+                const swipe = swipePower(offset.x, velocity.x);
+                if (swipe < -swipeConfidenceThreshold) {
+                  paginate(1);
+                } else if (swipe > swipeConfidenceThreshold) {
+                  paginate(-1);
+                }
+              }}
+            >
+              <Card>
+                <CardImg
+                  src={srcs[imageIndex(page + index)]}
+                  draggable={false}
+                  alt="card"
+                />
+              </Card>
+            </Pannel>
+          ))}
+        </AnimatePresence>
+      </Cotainer>
+    </>
   );
 }
 

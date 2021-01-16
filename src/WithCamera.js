@@ -22,26 +22,28 @@ const flyMove = 500;
 const variants = {
   enter: ({ direction, i }) => {
     return {
-      x: direction > 0 ? flyMove : -flyMove,
-      scale: direction > 0 ? 1 - 0.1 * 3 : 1,
-      transition: {
-        delayChildren: 1
-      }
+      x: direction > 0 ? i * 60 - i * Math.pow(2, 2) : -flyMove,
+      scale: direction > 0 ? 1 - 0.1 * 2 : 1
+      // transition: {
+      //   delayChildren: 1
+      // }
     };
   },
-  center: ({ direction, i }) => ({
+  center: ({ direction, i, page }) => ({
     zIndex: srcs.length - i,
     x: i * 60 - i * Math.pow(2, 2),
-    scale: 1 - 0.1 * i,
-    opacity: 1 - 0.1 * i
+    scale: 1 - 0.1 * i
+    // opacity: 1 - 0.1 * i
   }),
   exit: ({ direction, i }) => {
     return {
       zIndex: srcs.length - i,
-      x: direction < 0 ? flyMove : -flyMove,
-      transition: {
-        delayChildren: 1
-      }
+      x: direction < 0 ? 3 * 60 - 3 * Math.pow(2, 2) : -flyMove,
+      scale: direction < 0 ? 1 - 0.3 : 1,
+      opacity: 0
+      // transition: {
+      //   delayChildren: 1
+      // }
     };
   }
 };
@@ -84,21 +86,24 @@ export default function WithCamera() {
         ))}
       </div>
       <Cotainer height="600px" bg="#374045">
-        <AnimatePresence initial={false} custom={direction}>
+        <AnimatePresence initial={false} custom={{ direction, page }}>
           {range(3).map((index) => (
             <Pannel
               key={page + index}
+              layout
+              layoutId={index + 1}
               drag="x"
               dragConstraints={{ right: 0, top: 0, left: 0, bottom: 0 }}
               dragElastic={0.5}
-              custom={{ direction, i: index }}
+              custom={{ direction, i: index, page }}
               variants={variants}
               initial="enter"
               animate="center"
               exit="exit"
               transition={{
                 x: { type: "tween" },
-                opacity: { duration: 0.2 }
+                scale: { type: "tween" },
+                zIndex: { delay: direction > 0 ? 0.25 : 0 }
               }}
               onDragEnd={(e, { offset, velocity }) => {
                 const swipe = swipePower(offset.x, velocity.x);
