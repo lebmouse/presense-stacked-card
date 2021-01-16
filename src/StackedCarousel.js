@@ -5,40 +5,45 @@ import { AnimateSharedLayout, motion, AnimatePresence } from "framer-motion";
 import { range } from "lodash-es";
 import { wrap } from "popmotion";
 const src1 =
-  "https://cf.product.s.naunau.jp/age-group-featured-shops/images/20201221-005823091.jpg?size=450";
+  "https://cf.product.s.naunau.jp/age-group-featured-shops/images/20201221-005818294.jpg?size=450";
 const src2 =
-  "http://dailyjou.com/web/product/medium/202009/dad92926ed326872165e983b3e847037.jpg";
+  "https://cf.product.s.naunau.jp/age-group-featured-shops/images/20201221-005823091.jpg?size=450";
 const src3 =
-  "https://cf.product.s.naunau.jp/product-images/origin-images/17791/3489-20201122-085722551-1.jpeg?size=450";
+  "https://cf.product.s.naunau.jp/age-group-featured-shops/images/20201221-005829510.jpg?size=450";
 const src4 =
-  "https://cf.product.s.naunau.jp/product-images/origin-images/16783/3168-20201110-102308236-0.jpeg?size=450";
+  "https://cf.product.s.naunau.jp/age-group-featured-shops/images/20201221-005834651.jpg?size=450";
 const src5 =
-  "https://cf.product.s.naunau.jp/product-images/origin-images/20733/4482-20201228-140234334-1.jpeg?size=450";
+  "https://cf.product.s.naunau.jp/age-group-featured-shops/images/20201221-005839074.jpg?size=450";
 
-const srcs = [src1, src2, src3, src4, src5];
+const src6 =
+  "https://cf.product.s.naunau.jp/age-group-featured-shops/images/20201221-005842466.jpg?size=450";
+
+const srcs = [src1, src2, src3, src4, src5, src6];
 // const srcs = [src1, src2, src3];
 const flyMove = 500;
 
 const variants = {
   enter: ({ direction, i }) => {
     return {
-      x: direction > 0 ? flyMove : -flyMove,
-      scale: direction > 0 ? 1 - 0.1 * 2 : 1
+      x: direction > 0 ? 3 * 60 - 3 : -flyMove,
+      scale: direction > 0 ? 1 - 0.1 * 2 : 0.9
       // transition: {
       //   delayChildren: 1
       // }
     };
   },
-  center: ({ direction, i }) => ({
+  center: ({ direction, i, page }) => ({
     zIndex: srcs.length - i,
-    x: i * 60 - i * Math.pow(2, 2),
+    x: i * 60 - i * Math.pow(3, 2),
     scale: 1 - 0.1 * i
     // opacity: 1 - 0.1 * i
   }),
   exit: ({ direction, i }) => {
     return {
       zIndex: srcs.length - i,
-      x: direction < 0 ? flyMove : -flyMove
+      x: direction < 0 ? 3 * 60 - 3 * Math.pow(2, 2) : -flyMove,
+      scale: direction < 0 ? 1 - 0.3 : 1,
+      opacity: direction < 0 ? 0 : 1
       // transition: {
       //   delayChildren: 1
       // }
@@ -79,35 +84,42 @@ export default function StackedCarousel() {
               background: imageIndex(page) === idx ? "#fff" : "grey",
               borderRadius: "100%"
             }}
-            onClick={() => setPage(idx)}
+            onClick={() =>
+              setPage((prev) => {
+                const nextDirection = Math.sign(idx - prev[0]);
+                console.log(nextDirection);
+                return [idx, nextDirection];
+              })
+            }
           />
         ))}
       </div>
       <Cotainer height="600px" bg="#374045">
-        <AnimatePresence initial={false} custom={direction}>
+        <AnimatePresence initial={false} custom={{ direction, page }}>
           {range(3).map((index) => (
             <Pannel
               key={page + index}
               layout
               layoutId={index + 1}
-              drag="x"
+              drag={index === 0 && "x"}
               dragConstraints={{ right: 0, top: 0, left: 0, bottom: 0 }}
               dragElastic={0.5}
-              custom={{ direction, i: index }}
+              custom={{ direction, i: index, page }}
               variants={variants}
               initial="enter"
               animate="center"
               exit="exit"
               transition={{
                 x: { type: "tween" },
-                scale: { type: "tween", duration: 0.35 },
-                zIndex: { delay: direction > 0 ? 0.4 : 0 }
+                scale: { type: "tween", elapsed: 0.1 },
+                zIndex: { delay: direction > 0 ? 0.25 : 0 }
               }}
               onDragEnd={(e, { offset, velocity }) => {
                 const swipe = swipePower(offset.x, velocity.x);
-                if (swipe < -swipeConfidenceThreshold) {
+                console.log(offset.x);
+                if (swipe < -swipeConfidenceThreshold || offset.x < -730) {
                   paginate(1);
-                } else if (swipe > swipeConfidenceThreshold) {
+                } else if (swipe > swipeConfidenceThreshold || offset.x > 730) {
                   paginate(-1);
                 }
               }}
