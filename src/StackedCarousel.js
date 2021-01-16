@@ -64,11 +64,12 @@ export default function StackedCarousel() {
   console.log(page, direction);
   return (
     <Cotainer height="600px" bg="#374045">
+      <Pannel id="camera" />
       <AnimatePresence initial={false} custom={direction}>
         {range(3).map((index) => (
           <Pannel
             key={page + index}
-            drag="x"
+            // drag="x"
             dragConstraints={{ right: 0, top: 0, left: 0, bottom: 0 }}
             dragElastic={0.5}
             custom={{ direction, i: index }}
@@ -116,7 +117,7 @@ const Cotainer = styled.div`
 
 const Pannel = styled(motion.div)`
   position: absolute;
-  width: 90%;
+  width: 80%;
   height: 90%;
 `;
 
