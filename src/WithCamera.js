@@ -33,9 +33,14 @@ const swipePower = (offset, velocity) => {
   return Math.abs(offset) * velocity;
 };
 
+const DIFF_X = 40;
+
 export default function WithCamera() {
   const x = useMotionValue(0);
-  const scale = useTransform(x, [-50, 0, 50], [1.1, 1, 0.9]);
+  const fx = useTransform(x, [-flyMove, 0, DIFF_X], [-flyMove, 0, DIFF_X]);
+  const fscale = useTransform(x, [-flyMove, 0, DIFF_X], [1, 1, 0.9]);
+  const midX = useTransform(x, [-flyMove, 0, DIFF_X], [-DIFF_X, 0, DIFF_X]);
+  const scale = useTransform(x, [-flyMove, 0, 50], [1.1, 1, 0.9]);
   const [[page, direction], setPage] = useState([0, 0]);
 
   // detect it as an entirely new image. So you can infinitely paginate as few as 1 images.
@@ -76,7 +81,7 @@ export default function WithCamera() {
 
       <Cotainer height="600px" bg="#374045">
         <AnimatePresence initial={false} custom={{ direction, page }}>
-          <Pannel style={{ zIndex: 1200 }}>
+          <Pannel style={{ zIndex: 1200, x: fx, scale: fscale }}>
             <Card>
               <CardImg
                 src={srcs[imageIndex(page)]}
@@ -85,12 +90,12 @@ export default function WithCamera() {
               />
             </Card>
           </Pannel>
-          {range(1, 4).map((index) => (
+          {range(1, 5).map((index) => (
             <DPaneel
               key={page + index}
               direction={direction}
               index={index}
-              x={x}
+              x={midX}
               scale={scale}
             >
               <Card>
@@ -107,7 +112,7 @@ export default function WithCamera() {
           drag="x"
           style={{ x }}
           dragConstraints={{ right: 0, top: 0, left: 0, bottom: 0 }}
-          dragElastic={0.5}
+          dragElastic={0.9}
           onDrag={(e, { offset, point, delta, velocity }) => {}}
         />
       </Cotainer>
@@ -116,7 +121,7 @@ export default function WithCamera() {
 }
 
 function DPaneel({ children, index, x, scale, zIndex, onDragEnd, direction }) {
-  const px = useTransform(x, (x) => x + 60 * index);
+  const px = useTransform(x, (x) => x + DIFF_X * index);
   const pscale = useTransform(scale, (scale) => scale - 0.1 * index);
   // const pzIndex = useTransform(0, () => 1000 - index);
 
@@ -124,22 +129,10 @@ function DPaneel({ children, index, x, scale, zIndex, onDragEnd, direction }) {
     <Pannel
       layout
       layoutId={index + 1}
-      dragConstraints={{ right: 0, top: 0, left: 0, bottom: 0 }}
-      dragElastic={0.5}
-      initial={{
-        x: direction > 0 ? 3 * 60 - 3 : -flyMove,
-        scale: direction > 0 ? 1 - 0.1 * 2 : 0.9
-      }}
       style={{
         x: px,
         scale: pscale,
         zIndex: 1000 - index
-      }}
-      exit={{
-        zIndex: srcs.length - index,
-        x: direction < 0 ? 3 * 60 - 3 * Math.pow(2, 2) : -flyMove,
-        scale: direction < 0 ? 1 - 0.3 : 1,
-        opacity: direction < 0 ? 0 : 1
       }}
       transition={{
         x: { type: "tween" },
